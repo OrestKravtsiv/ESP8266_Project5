@@ -1,9 +1,13 @@
 //Приєднав модулі
+const express = require('express');
+const app = express();
 const http = require('http');
-const fs = require('fs').promises;
 const path = require('path');
-// const superagent = require('superagent');
+const fs = require('fs');
+// const fs = require('fs').promises;
+const bodyParser = require('body-parser');
 const { program } = require('commander');
+
 
 //Налаштував потрібні аргументи
 program
@@ -13,66 +17,41 @@ program
 //створив змінні для параметрів аргументів
 const options = program.opts();
 
-async function handleGetRequest(res, textPath) {
-    try {//Витягає дані з кешу
-        const fileText = await fs.readFile(textPath, 'utf8');// витягує з кешу
-        const lines = fileText.split('\n').filter(line => line.trim() !== ''); // Розбиває файл на рядки, фільтрує порожні рядки
-        const data = lines[lines.length - 1]; // Отримує останній непорожній рядок
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end(data);
-    } catch {// Частина 3 якщо даних в кеші нема, то надсилає запит на сайт
-        // якщо не знайшло на сайті, 404
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.end('Not Found');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true })); // Для обробки URL-encoded даних
+
+
+var dataArray = [];
+
+
+app.post('/data', (req, res) => {
+    const jsonData = req.body;
+    console.log(jsonData);
+    if (jsonData.crossPeriod) {
+        console.log(`Received data - Time of crossing: ${jsonData.offTime}, crossing period: ${jsonData.crossPeriod} ms, Speed: ${jsonData.speed} km/h`);
+        dataArray.push(jsonData);
+        // Тут ви можете зберігати дані в базі даних або виконувати інші операції
+
+        res.status(200).send('Data received');
+    } else {
+        res.status(400).send('Invalid data');
     }
-}
+});
 
-async function handlePostRequest(req, res, textPath) {
-    console.log("requested")
-    let body = '';
+app.get('/data', (req, res) => {
+    const json = dataArray;
+    res.status(200).json(json);
+})
 
-    req.on('data', chunk => {
-        body += chunk.toString();
-        console.log(chunk.toString())
-    });
-    req.on('end', () => {
-        fs.appendFile(textPath, body + '\n')
-        console.log('Received data:', body);
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end(body);
-    });
-}
+app.get('/time', (req, res) => {
+    const currentTime = new Date().toISOString();
+    res.json({ timestamp: currentTime });
+})
 
-//Callback для запиту
-const requestListener = async function (req, res) {
-    // посилання на файл в директорії кеш
-    const cacheFilePath = "./cache/text.txt"
-    try {
-        if (req.method == 'GET') {
-            await handleGetRequest(res, cacheFilePath);
-        } else if (req.method == 'POST') {
-            await handlePostRequest(req, res, cacheFilePath);
-        }
-        //  else if (req.method === 'DELETE') {
-        //     await handleDeleteRequest(res, cacheFilePath);
-        // }
-        else {
-            console.log("Method Not Allowed")
-            res.writeHead(405, { 'Content-Type': 'text/plain' });
-            res.end('Method Not Allowed');
-        }
-    } catch (error) {
-        console.error('Error handling request:', error);
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Internal Server Error');
-    }
-}
-
-// Створнення сервера
-const server = http.createServer(requestListener);
 
 // Задаємо адресу і порт якиі прослуховує сервер та виводимо в консоль 
-server.listen(options.port, options.host, () => {
-    console.log(`Server running at http://${options.host}:${options.port}/`);
+app.listen(options.port, options.host, () => {
+    console.log(`Server is running on http://${options.host}:${options.port}/`);
 });
+
 
