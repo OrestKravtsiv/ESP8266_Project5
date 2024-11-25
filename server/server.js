@@ -1,9 +1,6 @@
 //Приєднав модулі
 const express = require('express');
 const app = express();
-const http = require('http');
-const path = require('path');
-const fs = require('fs');
 // const fs = require('fs').promises;
 const bodyParser = require('body-parser');
 const { program } = require('commander');
@@ -44,8 +41,10 @@ app.get('/data', (req, res) => {
 })
 
 app.get('/time', (req, res) => {
-    const currentTime = new Date().toISOString();
-    res.json({ timestamp: currentTime });
+    date = new Date();
+    date.setHours(date.getHours() + 2);
+    const timeString = date.toISOString();
+    res.json({ timestamp: timeString });
 })
 
 
