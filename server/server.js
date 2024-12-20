@@ -15,7 +15,7 @@ program
 const options = program.opts();
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true })); // Для обробки URL-encoded даних
+app.use(bodyParser.urlencoded({ extended: true }));
 
 
 var dataArray = [];
@@ -27,7 +27,6 @@ app.post('/data', (req, res) => {
     if (jsonData.crossPeriod) {
         console.log(`Received data - Time of crossing: ${jsonData.offTime}, crossing period: ${jsonData.crossPeriod} ms, Speed: ${jsonData.speed} km/h`);
         dataArray.push(jsonData);
-        // Тут ви можете зберігати дані в базі даних або виконувати інші операції
 
         res.status(200).send('Data received');
     } else {
